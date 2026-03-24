@@ -459,8 +459,9 @@ impl SoulboundTicketContract {
             PricingStrategy::Standard => {
                 // Demand based: base_price * (1 + (minted / (max_supply / 5)) * 5%)
                 let thresholds_passed = tier.minted / (tier.max_supply.max(1) / 5).max(1);
-                let increase = price * PRICE_INCREASE_BPS * (thresholds_passed as i128) / 10000;
-                price += increase;
+                let multiplier = (thresholds_passed as i128).checked_mul(PRICE_INCREASE_BPS).expect("Arithmetic overflow");
+                let increase = price.checked_mul(multiplier).and_then(|v| v.checked_div(10000)).expect("Arithmetic overflow");
+                price = price.checked_add(increase).expect("Arithmetic overflow");
             }
             PricingStrategy::TimeDecay => {
                 let event_info: EventInfo =
@@ -470,25 +471,27 @@ impl SoulboundTicketContract {
                 // Assume linear scale from start to event_start_time
                 let start = event_info.start_time.saturating_sub(604800); // 1 week before
                 if now < start {
-                    price -= price * EARLY_BIRD_DISCOUNT_BPS / 10000;
+                    let discount = price.checked_mul(EARLY_BIRD_DISCOUNT_BPS).and_then(|v| v.checked_div(10000)).expect("Arithmetic overflow");
+                    price = price.checked_sub(discount).expect("Arithmetic overflow");
                 }
             }
             PricingStrategy::AbTestA => {
                 // High demand sensitivity (10% increase per threshold)
                 let thresholds_passed = tier.minted / (tier.max_supply.max(1) / 5).max(1);
-                let increase =
-                    price * (PRICE_INCREASE_BPS * 2) * (thresholds_passed as i128) / 10000;
-                price += increase;
+                let multiplier = (thresholds_passed as i128).checked_mul(PRICE_INCREASE_BPS * 2).expect("Arithmetic overflow");
+                let increase = price.checked_mul(multiplier).and_then(|v| v.checked_div(10000)).expect("Arithmetic overflow");
+                price = price.checked_add(increase).expect("Arithmetic overflow");
             }
             PricingStrategy::AbTestB => {
                 // Floor starts higher (+20%)
-                price += price * 2000 / 10000;
+                let uplift = price.checked_mul(2000).and_then(|v| v.checked_div(10000)).expect("Arithmetic overflow");
+                price = price.checked_add(uplift).expect("Arithmetic overflow");
             }
         }
 
         // Apply external Oracle factors using the real DIA oracle integration
         let oracle_multiplier = Self::fetch_oracle_multiplier(e, &config);
-        price = price * oracle_multiplier / ORACLE_PRECISION;
+        price = price.checked_mul(oracle_multiplier).and_then(|v| v.checked_div(ORACLE_PRECISION)).expect("Arithmetic overflow");
 
         // Apply bounds
         price = price.max(config.price_floor).min(config.price_ceiling);
@@ -520,7 +523,7 @@ impl SoulboundTicketContract {
                 .instance()
                 .get(&DataKey::TokenIdCounter)
                 .unwrap();
-            counter += 1;
+            counter = counter.checked_add(1).expect("Counter overflow");
             let token_id = counter;
             e.storage()
                 .instance()
@@ -539,7 +542,7 @@ impl SoulboundTicketContract {
                 .set(&DataKey::Ticket(token_id), &ticket);
         }
 
-        tier.minted += amount;
+        tier.minted = tier.minted.checked_add(amount).expect("Supply overflow");
         e.storage().persistent().set(&key, &tier);
     }
 
@@ -574,7 +577,7 @@ impl SoulboundTicketContract {
             .instance()
             .get(&DataKey::TokenIdCounter)
             .unwrap();
-        counter += 1;
+        counter = counter.checked_add(1).expect("Counter overflow");
         let token_id = counter;
         e.storage()
             .instance()
@@ -592,7 +595,7 @@ impl SoulboundTicketContract {
             .persistent()
             .set(&DataKey::Ticket(token_id), &ticket);
 
-        tier.minted += 1;
+        tier.minted = tier.minted.checked_add(1).expect("Supply overflow");
         tier.current_price = price; // Update the current recorded price for this tier
         e.storage().persistent().set(&key, &tier);
 

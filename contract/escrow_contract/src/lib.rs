@@ -399,9 +399,14 @@ impl EscrowContract {
         let mut referral_amount = Self::calculate_split(milestone.amount, escrow.revenue_splits.referral_percentage, escrow.revenue_splits.precision);
 
         // Adjust for rounding
-        let total_splits = organizer_amount + platform_amount + referral_amount;
+        let total_splits = organizer_amount
+            .checked_add(platform_amount)
+            .and_then(|val| val.checked_add(referral_amount))
+            .expect("Arithmetic overflow in total splits");
+
         if total_splits > milestone.amount {
-            referral_amount -= (total_splits - milestone.amount);
+            let diff = total_splits.checked_sub(milestone.amount).expect("Arithmetic error");
+            referral_amount = referral_amount.checked_sub(diff).expect("Arithmetic error");
         }
 
         // Transfer funds
@@ -436,7 +441,7 @@ impl EscrowContract {
         // Check delay
         let last_emergency_withdrawal: Option<u64> = e.storage().instance().get(&symbol_short!("last_emergency"));
         if let Some(last_time) = last_emergency_withdrawal {
-            if e.ledger().timestamp() < last_time + config.emergency_withdrawal_delay {
+            if e.ledger().timestamp() < last_time.checked_add(config.emergency_withdrawal_delay).expect("Time overflow") {
                 panic!("emergency withdrawal delay not met");
             }
         }
@@ -544,7 +549,10 @@ impl EscrowContract {
     }
 
     fn validate_config(config: &RevenueSplitConfig) {
-        let total_percentage = config.default_organizer_percentage + config.default_platform_percentage + config.default_referral_percentage;
+        let total_percentage = config.default_organizer_percentage
+            .checked_add(config.default_platform_percentage)
+            .and_then(|v| v.checked_add(config.default_referral_percentage))
+            .expect("Percentage overflow");
         if total_percentage != 100 * config.precision {
             panic!("invalid percentage distribution");
         }
@@ -559,14 +567,20 @@ impl EscrowContract {
     }
 
     fn validate_revenue_splits(splits: &RevenueSplit) {
-        let total_percentage = splits.organizer_percentage + splits.platform_percentage + splits.referral_percentage;
+        let total_percentage = splits.organizer_percentage
+            .checked_add(splits.platform_percentage)
+            .and_then(|v| v.checked_add(splits.referral_percentage))
+            .expect("Percentage overflow");
         if total_percentage != 100 * splits.precision {
             panic!("invalid percentage distribution");
         }
     }
 
     fn calculate_split(amount: i128, percentage: u32, precision: u32) -> i128 {
-        (amount * percentage as i128) / (100 * precision as i128)
+        amount
+            .checked_mul(percentage as i128)
+            .and_then(|val| val.checked_div(100i128.checked_mul(precision as i128).expect("Arithmetic overflow")))
+            .expect("Arithmetic overflow in split calculation")
     }
 
     fn distribute_revenue(e: &Env, escrow: &Escrow) {
@@ -579,9 +593,14 @@ impl EscrowContract {
         let mut referral_amount = Self::calculate_split(escrow.amount, escrow.revenue_splits.referral_percentage, escrow.revenue_splits.precision);
 
         // Adjust for rounding
-        let total_splits = organizer_amount + platform_amount + referral_amount;
+        let total_splits = organizer_amount
+            .checked_add(platform_amount)
+            .and_then(|val| val.checked_add(referral_amount))
+            .expect("Arithmetic overflow in total splits");
+
         if total_splits > escrow.amount {
-            referral_amount -= (total_splits - escrow.amount);
+            let diff = total_splits.checked_sub(escrow.amount).expect("Arithmetic error");
+            referral_amount = referral_amount.checked_sub(diff).expect("Arithmetic error");
         }
 
         // Transfer funds
@@ -646,7 +665,7 @@ impl EscrowContract {
                 last_referral: 0,
             });
 
-        tracker.referral_count += 1;
+        tracker.referral_count = tracker.referral_count.checked_add(1).expect("Referral count overflow");
         tracker.last_referral = e.ledger().timestamp();
 
         e.storage().persistent().set(&key, &tracker);
@@ -662,7 +681,7 @@ impl EscrowContract {
                 last_referral: 0,
             });
 
-        tracker.total_rewards += reward_amount;
+        tracker.total_rewards = tracker.total_rewards.checked_add(reward_amount).expect("Total rewards overflow");
 
         e.storage().persistent().set(&key, &tracker);
     }

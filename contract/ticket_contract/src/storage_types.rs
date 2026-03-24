@@ -120,3 +120,24 @@ pub struct VRFState {
     pub batch_nonce: u32,
     pub finalization_ledger: u32,
 }
+#[soroban_sdk::contracterror]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum TicketError {
+    AlreadyInitialized = 1,
+    Unauthorized = 2,
+    TierNotFound = 3,
+    TierAlreadyExists = 4,
+    TierSoldOut = 5,
+    TierNotActive = 6,
+    InsufficientBalance = 7,
+    InvalidAmount = 8,
+    RefundWindowClosed = 9,
+    TicketInvalid = 10,
+    NotTicketOwner = 11,
+    UpgradeNotScheduled = 12,
+    UpgradeHashMismatch = 13,
+    TimelockNotExpired = 14,
+    InvalidVersion = 15,
+    ArithmeticError = 16,
+}

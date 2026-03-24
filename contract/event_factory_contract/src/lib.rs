@@ -71,9 +71,10 @@ impl EventFactoryContract {
             .instance()
             .get(&symbol_short!("nonce"))
             .unwrap_or(0);
+        let next_nonce = counter.checked_add(1).expect("Nonce overflow");
         e.storage()
             .instance()
-            .set(&symbol_short!("nonce"), &(counter + 1));
+            .set(&symbol_short!("nonce"), &next_nonce);
 
         let mut salt_bytes = [0u8; 32];
         let counter_bytes = counter.to_be_bytes();
