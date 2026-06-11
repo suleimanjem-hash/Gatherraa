@@ -1,6 +1,6 @@
 //! Common error types and handling utilities
 
-use soroban_sdk::{Symbol, String};
+use soroban_sdk::String;
 
 /// Base error codes for all Gathera contracts
 pub mod error_codes {
