@@ -67,6 +67,9 @@ jobs:
       - name: Install Rust stable toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Add wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
       - name: Cache Cargo registry
         uses: actions/cache@v4
         with:
@@ -154,6 +157,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
       - name: Install cargo-audit
         uses: taiki-e/install-action@cargo-audit
 
@@ -185,8 +194,11 @@ jobs:
       - name: Install Rust stable toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install system dependencies for Soroban CLI
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev libudev-dev pkg-config
+
       - name: Install Soroban CLI
-        run: cargo install --locked soroban-cli --features opt
+        run: cargo install --locked soroban-cli
 
       - name: Build contracts
         working-directory: contract

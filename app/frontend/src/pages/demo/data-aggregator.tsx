@@ -44,13 +44,8 @@ const DataAggregatorDemo: React.FC = () => {
 
   const activeDataSources = mockDataSources.filter(source => selectedSources.includes(source.id));
 
-  const handleDataAggregated = (data: any[]) => {
-    console.log('Data aggregated:', data);
-    
-    const successCount = data.filter(d => d.status === 'success').length;
-    const failureCount = data.filter(d => d.status === 'error').length;
-    
-    console.log(`Aggregation complete: ${successCount} successful, ${failureCount} failed`);
+  const handleDataAggregated = (_data: any[]) => {
+    // Data aggregation callback - handlers are managed by the child component
   };
 
   const toggleSource = (sourceId: string) => {
