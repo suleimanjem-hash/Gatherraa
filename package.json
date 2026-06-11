@@ -17,7 +17,7 @@
   "scripts": {
     "install": "npm ci --workspaces",
     "clean": "rimraf node_modules app/backend/node_modules app/frontend/node_modules app/image-service/node_modules tests/integration/node_modules contract/target",
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspaces && npm run build:contracts",
     "build:backend": "npm --workspace app/backend run build",
     "build:frontend": "npm --workspace app/frontend run build",
     "build:contracts": "cd contract && cargo build --workspace --all-features",
@@ -27,7 +27,7 @@
     "lint": "npm run lint --workspaces",
     "lint:backend": "npm --workspace app/backend run lint",
     "lint:frontend": "npm --workspace app/frontend run lint",
-    "test": "npm run test --workspaces",
+    "test": "npm run test:backend && npm run test:integration && npm run test:contract",
     "test:backend": "npm --workspace app/backend test",
     "test:frontend": "npm --workspace app/frontend run lint",
     "test:contract": "cd contract && cargo test --workspace --all-features",

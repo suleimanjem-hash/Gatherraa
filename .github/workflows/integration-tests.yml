@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.x]
 
     steps:
     - uses: actions/checkout@v4
@@ -36,13 +36,13 @@ jobs:
       run: rustup target add wasm32-unknown-unknown
 
     - name: Install dependencies
-      run: npm ci
+      run: npm ci --workspaces
 
     - name: Compile contracts
-      run: npm --workspace tests/integration run build
+      run: npm run build:contracts
 
     - name: Run integration tests
-      run: npm --workspace tests/integration test
+      run: npm run test:integration
       timeout-minutes: 30
 
     - name: Upload test results
@@ -58,15 +58,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Use Node.js 18.x
+    - name: Use Node.js 20.x
       uses: actions/setup-node@v4
       with:
-        node-version: 18.x
+        node-version: 20.x
         cache: 'npm'
         cache-dependency-path: package-lock.json
 
     - name: Install dependencies
-      run: npm ci
+      run: npm ci --workspaces
 
     - name: Generate coverage report
       run: npm --workspace tests/integration run test:coverage || echo "Coverage generation failed - continuing..."
@@ -87,15 +87,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Use Node.js 18.x
+    - name: Use Node.js 20.x
       uses: actions/setup-node@v4
       with:
-        node-version: 18.x
+        node-version: 20.x
         cache: 'npm'
         cache-dependency-path: package-lock.json
 
     - name: Install dependencies
-      run: npm ci
+      run: npm ci --workspaces
 
     - name: Run linter
       run: npm --workspace tests/integration run test:lint || echo "Linting failed - continuing..."

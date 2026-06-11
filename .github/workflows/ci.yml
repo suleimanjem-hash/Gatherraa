@@ -100,10 +100,10 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --workspaces
 
       - name: Run backend tests
-        run: npm --workspace app/backend test
+        run: npm run test:backend
 
   # --- Frontend Jobs ---
   frontend-lint:
@@ -120,10 +120,10 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --workspaces
 
       - name: Run ESLint
-        run: npm --workspace app/frontend run lint
+        run: npm run lint:frontend
 
   frontend-typecheck:
     name: Frontend TypeCheck
@@ -139,7 +139,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --workspaces
 
       - name: Run TypeScript typecheck
         run: npx tsc --noEmit

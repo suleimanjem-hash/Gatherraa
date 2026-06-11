@@ -102,10 +102,10 @@ cd ../frontend && npm install
 ### Workspace commands
 
 - `npm run install` - install all workspace dependencies from the root lockfile
-- `npm run build` - build all workspace packages
+- `npm run build` - build all workspace packages and compile contracts
 - `npm run lint` - lint all workspace packages
 - `npm run format` - format all workspace packages with available workspace format scripts
-- `npm run test` - run tests across all workspace packages
+- `npm run test` - run backend, integration, and contract tests
 - `npm run clean` - remove workspace install artifacts
 - `npm run workspace:status` - list workspace packages
 
