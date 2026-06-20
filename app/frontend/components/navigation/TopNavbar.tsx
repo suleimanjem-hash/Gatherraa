@@ -56,6 +56,7 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { label: "Community", href: "/community" },
+  { label: "My Tickets", href: "/tickets" },
   { label: "Pricing", href: "/pricing" },
 ];
 
